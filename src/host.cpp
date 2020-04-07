@@ -38,6 +38,9 @@ typedef std::chrono::high_resolution_clock Clock;
 #include <vector>
 #include "kernel_params.h"
 
+//starting from https://github.com/Xilinx/Vitis_Accel_Examples/blob/master/host/streaming_host_bandwidth/src/host.cpp
+#include "CL/cl_ext_xilinx.h"
+
 #define STRINGIFY2(var) #var
 #define STRINGIFY(var) STRINGIFY2(var)
 
