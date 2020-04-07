@@ -33,11 +33,19 @@ Description:
     device resource utilization of the resulting RTL code
     This is a wrapper to be used with an hls4ml project to enable proper handling by SDAccel
 *******************************************************************************/
+#include "ap_axi_sdata.h"
+#include "hls_stream.h"
 
 #define PROJ_HDR <MYPROJ.h>
 
 #include PROJ_HDR
 #include "kernel_params.h"
+
+#define DWIDTH 512
+#define DATATYPE_SIZE 16
+#define VECTOR_SIZE (DWIDTH / DATATYPE_SIZE) // vector size is 32 (512/16 = 32)
+
+typedef qdma_axis<DWIDTH, 0, 0, 0> pkt;
 
 /*
     HLS4ML Kernel Implementation 
@@ -47,8 +55,8 @@ Description:
    */
 extern "C" {
 void alveo_hls4ml(
-        const bigdata_t *in, // Read-Only Vector
-        bigdata_t *out       // Output Result
+        hls::stream<pkt> &in, // Read-Only Vector
+        hls::stream<pkt> &out       // Output Result
         )
 {
 // SDAccel kernel must have one and only one s_axilite interface which will be used by host application to configure the kernel.
@@ -59,55 +67,44 @@ void alveo_hls4ml(
 // accessing global memory through this interface.
 // Multiple interfaces can also be created based on the requirements. For example when multiple memory accessing arguments need access to
 // global memory simultaneously, user can create multiple master interfaces and can connect to different arguments.
-#pragma HLS INTERFACE m_axi port=in  offset=slave bundle=gmem
-#pragma HLS INTERFACE m_axi port=out offset=slave bundle=gmem
-#pragma HLS INTERFACE s_axilite port=in   bundle=control
-#pragma HLS INTERFACE s_axilite port=out  bundle=control
+#pragma HLS INTERFACE axis port=in
+#pragma HLS INTERFACE axis port=out
 #pragma HLS INTERFACE s_axilite port=return bundle=control
-    #pragma HLS DATAFLOW
-    //necessary for hls4ml kernel, not used
 
-    bigdata_t in_bigbuf[STREAMSIZE];
-    bigdata_t out_bigbuf[COMPSTREAMSIZE];
-    
-    input_t in_buf[STREAMSIZE][DATA_SIZE_IN];
-    layer11_t out_buf[STREAMSIZE][DATA_SIZE_OUT];
-    //these will get partitioned properly in the hls4ml code
 
-    #pragma HLS ARRAY_RESHAPE   variable=in_buf  complete dim=2
-    #pragma HLS ARRAY_RESHAPE   variable=out_buf complete dim=2
+    for (int i0 = 0; i0 < COMPSTREAMSIZE; i0++) {
+        pkt t_out;
+        bigdata_t tmpOut;
+        for (int i = 0; i < COMPRESSION; i++) {
+            pkt t1 = in.read();
+            bigdata_t dtmp = t1.get_data();
 
-    //getting data from DDR
-    for (int i = 0; i < STREAMSIZE; i++) {
-      in_bigbuf[i] = in[i];
+            input_t in_buf[DATA_SIZE_IN];
+            layer11_t out_buf[DATA_SIZE_OUT];
+            //these will get partitioned properly in the hls4ml code
+            #pragma HLS ARRAY_RESHAPE   variable=in_buf  complete
+            #pragma HLS ARRAY_RESHAPE   variable=out_buf complete
+
+            for (int j = 0; j < DATA_SIZE_IN; j++) {
+                #pragma HLS PIPELINE II=1
+	        in_buf[j].range(15,0) = dtmp.range(16*(j+1)-1,16*j);
+            }
+
+            hls4ml: MYPROJ(in_buf,out_buf);
+	
+            for(int j = 0; j < DATA_SIZE_OUT; j++) { 
+                tmpOut((i+1)*16-1,(i)*16) = out_buf[i0*COMPRESSION+i][j].range(15,0);
+            }
+        }
+
+        // Setting data and configuration to output packet
+        t_out.set_data(tmpOut);
+        t_out.set_last(i0==(COMPSTREAMSIZE-1) ? 1 : 0);
+        t_out.set_keep(-1); // Enabling all bytes
+
+        // Writing packet to output stream
+        output.write(t_out);
+
     }
-    for (int i = 0; i < STREAMSIZE; i++) {
-      #pragma HLS PIPELINE
-      for(int i0 = 0; i0 < DATA_SIZE_IN; i0++) { 
-         #pragma HLS UNROLL
-	 in_buf[i][i0].range(15,0) = in_bigbuf[i].range(16*(i0+1)-1,16*i0);
-      }
-    }
-    //run inference
-    for (int i = 0; i < STREAMSIZE; i++) {
-      #pragma HLS DATAFLOW
-      hls4ml: MYPROJ(in_buf[i],out_buf[i]);
-    }
-    for (int i = 0; i < COMPSTREAMSIZE; i++) {
-      #pragma HLS PIPELINE
-      bigdata_t tmp;
-      for(int i1 = 0; i1 < COMPRESSION;i1++) { 
-       for(int i0 = 0; i0 < DATA_SIZE_OUT; i0++) { 
-        #pragma HLS UNROLL
-	tmp((i1+1)*16-1,(i1)*16) = out_buf[i*COMPRESSION+i1][i0].range(15,0);
-       }
-      }
-      out_bigbuf[i] = tmp;
-    }
-    //place output into DDR
-    for (int i = 0; i < COMPSTREAMSIZE; i++) {
-     out[i] = out_bigbuf[i];
-    }
-  }
 }
-
+}
