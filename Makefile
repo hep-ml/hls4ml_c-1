@@ -102,10 +102,10 @@ build: $(BINARY_CONTAINERS)
 # Building kernel
 $(TEMP_DIR)/aws_hls4ml.xo: src/aws_hls4ml.cpp
 	mkdir -p $(TEMP_DIR)
-	$(VPP) $(CLFLAGS) --temp_dir $(TEMP_DIR) -c -k aws_hls4ml -I'$(<D)' -o'$@' '$<' src/ereg_v1.cpp -DMYPROJ=ereg_v1 -DIS_$(HLS4ML_PROJ_TYPE) -I./src/ -I./src/weights -I./src/nnet_utils/ --xp "prop:solution.hls_pre_tcl=./config.tcl" --xp "prop:kernel.aws_hls4ml.kernel_flags=-std=c++11"
+	$(VPP) $(CLFLAGS) --temp_dir $(TEMP_DIR) -c -k aws_hls4ml -I'$(<D)' -o'$@' '$<' src/ereg_v1.cpp -DMYPROJ=ereg_v1 -DIS_$(HLS4ML_PROJ_TYPE) -I./src/ -I./src/weights -I./src/nnet_utils/ --config config.ini
 $(BUILD_DIR)/aws_hls4ml.xclbin: $(BINARY_CONTAINER_aws_hls4ml_OBJS)
 	mkdir -p $(BUILD_DIR)
-	$(VPP) $(CLFLAGS) --temp_dir $(BUILD_DIR) -l $(LDCLFLAGS) -o'$@' $(+)
+	$(VPP) $(CLFLAGS) --temp_dir $(BUILD_DIR) -l $(LDCLFLAGS) -o'$@' $(+) --config config.ini
 
 # Building Host
 $(EXECUTABLE): check-xrt $(HOST_SRCS) $(HOST_HDRS)
@@ -119,7 +119,7 @@ check: all
 ifeq ($(TARGET),$(filter $(TARGET),sw_emu hw_emu))
 ifeq ($(HOST_ARCH), x86)
 	$(CP) $(EMCONFIG_DIR)/emconfig.json .
-	XCL_EMULATION_MODE=$(TARGET) ./$(EXECUTABLE) $(BUILD_DIR)/aws_hls4ml.xclbin
+	XCL_EMULATION_MODE=$(TARGET) ./$(EXECUTABLE) ./aws_hls4ml.awsxclbin
 else
 	mkdir -p $(EMU_DIR)
 	$(CP) $(XILINX_VITIS)/data/emulation/unified $(EMU_DIR)
@@ -128,7 +128,7 @@ else
 endif
 else
 ifeq ($(HOST_ARCH), x86)
-	./$(EXECUTABLE) $(BUILD_DIR)/aws_hls4ml.xclbin
+	./$(EXECUTABLE) ./aws_hls4ml.awsxclbin
 endif
 endif
 ifeq ($(HOST_ARCH), x86)
