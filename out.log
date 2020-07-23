@@ -1,0 +1,53 @@
+nohup: ignoring input
+/data/drankin/deepCalo/hls4ml_c_bak/utility/utils.mk:65: [WARNING]: g++ version older. Using g++ provided by the tool : /data/Xilinx/Vivado/2019.2/tps/lnx64/gcc-6.2.0/bin/g++
+/data/Xilinx/Vivado/2019.2/tps/lnx64/gcc-6.2.0/bin/g++ -I.//libs/xcl2 -I./src/ -I./src/nnet_utils/ -I/opt/xilinx/xrt/include/ -I/opt/xilinx/xrt/include/ -Wall -O0 -g -std=c++11 -DIS_DENSE -DHLS4ML_DATA_DIR=./ -fmessage-length=0 .//libs/xcl2/xcl2.cpp src/host.cpp  -o 'host'  -L/opt/xilinx/xrt/lib/ -lOpenCL -lpthread -I/data/Xilinx/Vivado/2019.2/include/ -I/include/ -Wno-unknown-pragmas -lrt -lstdc++ 
+src/host.cpp: In function ‘int main(int, char**)’:
+src/host.cpp:488:10: warning: variable ‘t0’ set but not used [-Wunused-but-set-variable]
+     auto t0 = Clock::now();
+          ^~
+src/host.cpp:489:10: warning: variable ‘t1’ set but not used [-Wunused-but-set-variable]
+     auto t1 = Clock::now();
+          ^~
+src/host.cpp:490:10: warning: variable ‘t1a’ set but not used [-Wunused-but-set-variable]
+     auto t1a = Clock::now();
+          ^~~
+src/host.cpp:491:10: warning: variable ‘t1b’ set but not used [-Wunused-but-set-variable]
+     auto t1b = Clock::now();
+          ^~~
+src/host.cpp:492:10: warning: variable ‘t2’ set but not used [-Wunused-but-set-variable]
+     auto t2 = Clock::now();
+          ^~
+src/host.cpp:493:10: warning: variable ‘t3’ set but not used [-Wunused-but-set-variable]
+     auto t3 = Clock::now();
+          ^~
+mkdir -p ./_x.hw.xilinx_u250_xdma_201830_2
+v++ -t hw --platform xilinx_u250_xdma_201830_2 --save-temps  --temp_dir ./_x.hw.xilinx_u250_xdma_201830_2 -c -k alveo_hls4ml -I'src' -o'_x.hw.xilinx_u250_xdma_201830_2/alveo_hls4ml.xo' 'src/alveo_hls4ml.cpp' src/myproject.cpp -DMYPROJ=myproject -DIS_DENSE -I./src/ -I./src/weights -I./src/nnet_utils/ --config config.ini --kernel_frequency 100
+Option Map File Used: '/data/Xilinx/Vitis/2019.2/data/vitis/vpp/optMap.xml'
+
+****** v++ v2019.2.1 (64-bit)
+  **** SW Build 2729669 on Thu Dec  5 04:48:12 MST 2019
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+INFO: [v++ 60-1306] Additional information associated with this v++ compile can be found at:
+	Reports: /data/drankin/deepCalo/hls4ml_c_bak/_x.hw.xilinx_u250_xdma_201830_2/reports/alveo_hls4ml
+	Log files: /data/drankin/deepCalo/hls4ml_c_bak/_x.hw.xilinx_u250_xdma_201830_2/logs/alveo_hls4ml
+Running Dispatch Server on port:39434
+INFO: [v++ 60-1548] Creating build summary session with primary output /data/drankin/deepCalo/hls4ml_c_bak/_x.hw.xilinx_u250_xdma_201830_2/alveo_hls4ml.xo.compile_summary, at Wed Jul 22 10:54:24 2020
+INFO: [v++ 60-1316] Initiating connection to rulecheck server, at Wed Jul 22 10:54:24 2020
+Running Rule Check Server on port:43065
+INFO: [v++ 60-1315] Creating rulecheck session with output '/data/drankin/deepCalo/hls4ml_c_bak/_x.hw.xilinx_u250_xdma_201830_2/reports/alveo_hls4ml/v++_compile_alveo_hls4ml_guidance.html', at Wed Jul 22 10:54:25 2020
+INFO: [v++ 60-895]   Target platform: /data/Xilinx/Vitis/2019.2/platforms/xilinx_u250_xdma_201830_2/xilinx_u250_xdma_201830_2.xpfm
+INFO: [v++ 60-1578]   This platform contains Device Support Archive '/data/Xilinx/Vitis/2019.2/platforms/xilinx_u250_xdma_201830_2/hw/xilinx_u250_xdma_201830_2.dsa'
+INFO: [v++ 60-585] Compiling for hardware target
+INFO: [v++ 60-423]   Target device: xilinx_u250_xdma_201830_2
+INFO: [v++ 60-242] Creating kernel: 'alveo_hls4ml'
+INFO: [v++ 60-1616] Creating a HLS clock using kernel_frequency option: 100 MHz
+
+===>The following messages were generated while  performing high-level synthesis for kernel: alveo_hls4ml Log file: /data/drankin/deepCalo/hls4ml_c_bak/_x.hw.xilinx_u250_xdma_201830_2/alveo_hls4ml/alveo_hls4ml/vivado_hls.log :
+INFO: [v++ 204-61] Option 'relax_ii_for_timing' is enabled, will increase II to preserve clock frequency constraints.
+ERROR: [v++ 203-1] bitcode didn't read correctly.
+ERROR: [v++ 200-70] Pre-synthesis failed.
+ERROR: [v++ 60-300] Failed to build kernel(ip) alveo_hls4ml, see log for details: /data/drankin/deepCalo/hls4ml_c_bak/_x.hw.xilinx_u250_xdma_201830_2/alveo_hls4ml/alveo_hls4ml/vivado_hls.log
+ERROR: [v++ 60-599] Kernel compilation failed to complete
+ERROR: [v++ 60-592] Failed to finish compilation
+make: *** [_x.hw.xilinx_u250_xdma_201830_2/alveo_hls4ml.xo] Error 1
