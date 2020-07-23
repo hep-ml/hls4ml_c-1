@@ -1,21 +1,14 @@
-# hls4ml on AWS FPGA Developer AMI v1.8.x (HLS C/C++ Kernel)
+# DeepCalo (broken) with Vitis 2019.2 (HLS C/C++ Kernel)
 
 Setup tools, licenses, check connection to FPGA card
 
-Check out packages
+Logs from previous test w/ errors:
 ```bash
-# check out hls4ml_c SDAccel project
-git clone https://github.com/drankincms/hls4ml_c -b hcal_model_aws
-```
-Compile SDAccel project
-```bash
-cd hls4ml_c
-make check TARGETS=sw_emu DEVICES=$AWS_PLATFORM all # software emulation
-make check TARGETS=hw_emu DEVICES=$AWS_PLATFORM all # hardware emulation
-make TARGETS=hw DEVICES=$AWS_PLATFORM all # build
+out.log
+_x.hw.xilinx_u250_xdma_201830_2/alveo_hls4ml/alveo_hls4ml/vivado_hls.log
 ```
 
-Run project
+To replicate bitcode error:
 ```bash
-./host 
+nohup make check TARGETS=hw DEVICE=xilinx_u250_xdma_201830_2 all
 ```
