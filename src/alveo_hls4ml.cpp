@@ -39,13 +39,6 @@ Description:
 #include PROJ_HDR
 #include "kernel_params.h"
 
-template<unsigned N> 
-void fillWeights(const model_default_t iWeightsIn[N], model_default_t weights[N]) { 
-  for(int i0 = 0; i0 < N; i0++) { 
-    weights[i0] = iWeightsIn[i0];
-  }
-}
-
 /*
     HLS4ML Kernel Implementation 
     Arguments:
@@ -75,20 +68,21 @@ void alveo_hls4ml(
     //necessary for hls4ml kernel, not used
     #pragma HLS DATAFLOW
 
-
     unsigned short const_size_in_1, const_size_out_1;
 
     bigdata_t in_bigbuf[BIGSTREAMSIZE_IN*STREAMSIZE];
     bigdata_t out_bigbuf[BIGSTREAMSIZE_OUT*STREAMSIZE];
     
-    hls::stream<input_t> in_buf[STREAMSIZE][DATA_SIZE_IN+1];
-    hls::stream<result_t> out_buf[STREAMSIZE][DATA_SIZE_OUT];
+    hls::stream<input_t> in_buf[STREAMSIZE];
+    hls::stream<result_t> out_buf[STREAMSIZE];
     //these will get partitioned properly in the hls4ml code
 
     #pragma HLS ARRAY_PARTITION   variable=in_buf  complete dim=0
     #pragma HLS ARRAY_PARTITION   variable=out_buf complete dim=0
-    #pragma HLS STREAM   variable=in_buf  depth=1000
-    #pragma HLS STREAM   variable=out_buf depth=1
+    for (unsigned int istream = 0; istream < STREAMSIZE; istream++) {
+      #pragma HLS STREAM   variable=in_buf[istream]  depth=1000
+      #pragma HLS STREAM   variable=out_buf[istream] depth=1
+    }
 
     //getting data from DDR
     for (int i = 0; i < STREAMSIZE*BIGSTREAMSIZE_IN; i++) {
@@ -103,31 +97,24 @@ void alveo_hls4ml(
 	    int ib = (i0*DATA_SIZE_IN+i1)%COMPRESSION;
 	    int ia = i*BIGSTREAMSIZE_IN+( (i0*DATA_SIZE_IN+i1)/COMPRESSION);
 	    input_t tmp;
-	    tmp[0].range(15,0) = in_bigbuf[ia].range(16*(ib+1)-1,16*ib);
-	    int chan = ( (i0*DATA_SIZE_IN+i1) % DATA_SIZE_IN)+1;
-            input_t write_value;
-            if (i0 == 0)
-                    write_value[0] =  0;
-            else
-                    write_value[0] = 1;
-	    if (chan == 1) (in_buf[i][0]).write(write_value);
-	    in_buf[i][chan].write(tmp);
-	    std::cout<<"writing to ["<<i<<"]["<<chan<<"]"<<std::endl;
+	    tmp[i1].range(15,0) = in_bigbuf[ia].range(16*(ib+1)-1,16*ib);
+	    in_buf[i].write(tmp);
+	    std::cout<<"writing to ["<<i<<"]["<<i1<<"]"<<std::endl;
 	  }
 	}
       std::cout<<"inf start"<<std::endl;
-      hls4ml: MYPROJ(*in_buf[i],*out_buf[i],const_size_in_1, const_size_out_1);
+      hls4ml: MYPROJ(in_buf[i],out_buf[i],const_size_in_1, const_size_out_1);
 	std::cout<<"inf end"<<std::endl;
       bigdata_t tmp;
+      result_t tmp_small;
       for(int i0 = 0; i0 < OUT_STREAM_LEN; i0++) { 
+       tmp_small = out_buf[i].read();
        for(int i1 = 0; i1 < DATA_SIZE_OUT; i1++) {
 	  #pragma HLS UNROLL
         int ib = (i0*DATA_SIZE_OUT+i1)%COMPRESSION;
         int ia = i*BIGSTREAMSIZE_OUT+((i0*DATA_SIZE_OUT+i1)/COMPRESSION);
         std::cout<<"reading from ["<<i<<"]["<<i1<<"]"<<std::endl;
-        result_t tmp_small;
-        tmp_small = out_buf[i][i1].read();
-        tmp((ib+1)*16-1,(ib)*16) = tmp_small[0].range(15,0);
+        tmp((ib+1)*16-1,(ib)*16) = tmp_small[i1].range(15,0);
         if (((i0*DATA_SIZE_OUT+i1)%COMPRESSION == COMPRESSION-1) || (i0 == OUT_STREAM_LEN-1 && i1 == DATA_SIZE_OUT-1)) out_bigbuf[ia] = tmp;
        }
       }
