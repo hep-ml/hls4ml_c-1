@@ -29,7 +29,7 @@ void myproject(
 ) {
 
     //hls-fpga-machine-learning insert IO
-    #pragma HLS INTERFACE axis port=q_conv2d_input,layer15_out 
+    #pragma HLS INTERFACE axis port=q_conv2d_input,layer15_out
     #pragma HLS DATAFLOW 
 
     const_size_in_1 = N_INPUT_1_1*N_INPUT_2_1*N_INPUT_3_1;
