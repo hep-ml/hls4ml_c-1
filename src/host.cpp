@@ -246,7 +246,7 @@ class fpgaObj {
             }
             OCL_CHECK(err,
                       err =
-		      q[ik].enqueueMigrateMemObjects({buffer_in[ikb],buffer_wvec_in[0],buffer_wvec_in[1],buffer_wvec_in[2],buffer_wvec_in[3],buffer_wvec_in[4],buffer_wvec_in[5]},
+		      q[ik].enqueueMigrateMemObjects({buffer_in[ikb]},
                                                      0 /* 0 means from host*/,
                                                      NULL,
                                                      &(write_event[ikb])));
