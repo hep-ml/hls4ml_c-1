@@ -324,19 +324,19 @@ int main(int argc, char** argv)
     strcpy(datadir_char, datadir.c_str());
     char* filename = strcat(datadir_char, "/tb_input_features.dat");
     FILE *fptr;
-    void *input_features;
-    fread(input_features, sizeof(uint16_t)*INPUT_DIM*INPUT_DIM, 1, fptr); 
-    if ((fptr = fopen(filename ,"r")) == NULL){
-        printf("Error! opening file");
+    uint16_t input_features[INPUT_DIM][INPUT_DIM];
+   if ((fptr = fopen(filename ,"r")) == NULL){
+        printf("Error! opening file %s\n",datadir_char);
         exit(1);
     }
-    fclose(fptr); 
+    fread(input_features, sizeof(uint16_t)*INPUT_DIM*INPUT_DIM, 1, fptr); 
+    fclose(fptr);
 
     //initialize
     int stepsize = 512;
     int step = 0;
     for(int j = 0 ; j < STREAMSIZE*BIGSTREAMSIZE_IN*NUM_CU*NBUFFER ; j++){
-	fpga.source_in[j] = 1;
+	fpga.source_in[j] = input_features[step];
 	step += stepsize;
     //  if(j != 0) fpga.source_in[j] = 1;
     //  if(j == 0) fpga.source_in[j] = 1;
