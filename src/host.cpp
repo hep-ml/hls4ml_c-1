@@ -49,6 +49,8 @@ typedef std::chrono::system_clock SClock;
 #define NBUFFER 1
 #define NUM_CU 1
 
+#define INPUT_DIM 64
+
 #define STRINGIFY2(var) #var
 #define STRINGIFY(var) STRINGIFY2(var)
 
@@ -316,11 +318,30 @@ int main(int argc, char** argv)
     fpga.source_in.reserve(STREAMSIZE*BIGSTREAMSIZE_IN*NUM_CU*NBUFFER);
     fpga.source_hw_results.reserve(STREAMSIZE*BIGSTREAMSIZE_OUT*NUM_CU*NBUFFER);
 
-    //initialize
-    for(int j = 0 ; j < STREAMSIZE*BIGSTREAMSIZE_IN*NUM_CU*NBUFFER ; j++){
-      if(j != 0) fpga.source_in[j] = 1;
-      if(j == 0) fpga.source_in[j] = 1;
+    //read input data
+    int strlen = datadir.length();
+    char datadir_char[strlen + 1];
+    strcpy(datadir_char, datadir.c_str());
+    char* filename = strcat(datadir_char, "/tb_input_features.dat");
+    FILE *fptr;
+    void *input_features;
+    fread(input_features, sizeof(uint16_t)*INPUT_DIM*INPUT_DIM, 1, fptr); 
+    if ((fptr = fopen(filename ,"r")) == NULL){
+        printf("Error! opening file");
+        exit(1);
     }
+    fclose(fptr); 
+
+    //initialize
+    int stepsize = 512;
+    int step = 0;
+    for(int j = 0 ; j < STREAMSIZE*BIGSTREAMSIZE_IN*NUM_CU*NBUFFER ; j++){
+	fpga.source_in[j] = 1;
+	step += stepsize;
+    //  if(j != 0) fpga.source_in[j] = 1;
+    //  if(j == 0) fpga.source_in[j] = 1;
+    }
+    
     for(int j = 0 ; j < STREAMSIZE*BIGSTREAMSIZE_OUT*NUM_CU*NBUFFER ; j++){
       data_t in=(data_t) j;
       fpga.source_hw_results[j] = in;
